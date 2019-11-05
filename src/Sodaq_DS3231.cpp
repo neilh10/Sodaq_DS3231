@@ -146,6 +146,32 @@ DateTime::DateTime (const char* date, const char* time) {
     wday = DayOfWeek(yOff+2000, m, d);
 }
 
+// A convenient constructor for using "the compiler's time":
+// This version will save RAM by using PROGMEM to store it by using the F macro.
+//   DateTime now (F(__DATE__), F(__TIME__));
+DateTime::DateTime (const __FlashStringHelper* date, const __FlashStringHelper* time) {
+    // sample input: date = "Dec 26 2009", time = "12:34:56"
+    char buff[11];
+    memcpy_P(buff, date, 11);
+    yOff = conv2d(buff + 9);
+    // Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
+    switch (buff[0]) {
+        case 'J': m = (buff[1] == 'a') ? 1 : ((buff[2] == 'n') ? 6 : 7); break;
+        case 'F': m = 2; break;
+        case 'A': m = buff[2] == 'r' ? 4 : 8; break;
+        case 'M': m = buff[2] == 'r' ? 3 : 5; break;
+        case 'S': m = 9; break;
+        case 'O': m = 10; break;
+        case 'N': m = 11; break;
+        case 'D': m = 12; break;
+    }
+    d = conv2d(buff + 4);
+    memcpy_P(buff, time, 8);
+    hh = conv2d(buff);
+    mm = conv2d(buff + 3);
+    ss = conv2d(buff + 6);
+}
+
 uint32_t DateTime::get() const {
     uint16_t days = date2days(yOff, m, d);
     return time2long(days, hh, mm, ss);
@@ -154,6 +180,10 @@ uint32_t DateTime::get() const {
 uint32_t DateTime::getEpoch() const
 {
     return get() + EPOCH_TIME_OFF;
+}
+uint32_t DateTime::getY2k_secs() const
+{
+    return get();
 }
 
 /*
@@ -430,3 +460,91 @@ float Sodaq_DS3231::getTemperature()
 }
 
 Sodaq_DS3231 rtc;
+
+#if defined ADAFRUIT_FEATHERWING_RTC_SD
+////////////////////////////////////////////////////////////////////////////////
+// RTC_PCF8563 implementation
+
+boolean RTC_PCF8523::begin(void) {
+  Wire.begin();
+  return true;
+}
+
+boolean RTC_PCF8523::initialized(void) {
+  Wire.beginTransmission(PCF8523_ADDRESS);
+  Wire.write((byte)PCF8523_CONTROL_3);
+  Wire.endTransmission();
+
+  Wire.requestFrom(PCF8523_ADDRESS, 1);
+  uint8_t ss = Wire.read();
+  //returns false if reads 0xE0 battery switch-over function is disabled
+  return ((ss & 0xE0) != 0xE0);
+}
+
+void RTC_PCF8523::setTimeEpochT0(long t) {
+    DateTime dt;
+    setTimeYear2kT0(t-EPOCH_TIME_OFF);
+}
+// Set time - relative to yr2000
+void RTC_PCF8523::setTimeYear2kT0(const DateTime& dt) { 
+  Wire.beginTransmission(PCF8523_ADDRESS);
+  Wire.write((byte)3); // start at location 3
+  Wire.write(bin2bcd(dt.second()));
+  Wire.write(bin2bcd(dt.minute()));
+  Wire.write(bin2bcd(dt.hour()));
+  Wire.write(bin2bcd(dt.date()));
+  Wire.write(bin2bcd(dt.dayOfWeek())); // skip weekdays
+  Wire.write(bin2bcd(dt.month()));
+  Wire.write(bin2bcd(dt.year() - 2000));
+  Wire.endTransmission();
+
+  // set to battery switchover mode
+  Wire.beginTransmission(PCF8523_ADDRESS);
+  Wire.write((byte)PCF8523_CONTROL_3);
+  Wire.write((byte)0x00);
+  Wire.endTransmission();
+}
+
+DateTime RTC_PCF8523::now() {
+  uint8_t ss, mm, hh, day, wkday, mnth; 
+  uint16_t year;
+  Wire.beginTransmission(PCF8523_ADDRESS);
+  Wire.write((byte)3);	
+  Wire.endTransmission();
+
+  Wire.requestFrom(PCF8523_ADDRESS, 7);
+  ss = bcd2bin(Wire.read() & 0x7F);
+  mm = bcd2bin(Wire.read());
+  hh = bcd2bin(Wire.read());
+  day = bcd2bin(Wire.read());
+  wkday =bcd2bin(Wire.read());  // skip 'weekdays'
+  mnth = bcd2bin(Wire.read());
+  year = bcd2bin(Wire.read()) + 2000;
+  
+  return DateTime (year, mnth, day, hh, mm, ss,wkday);
+}
+
+Pcf8523SqwPinMode RTC_PCF8523::readSqwPinMode() {
+  int mode;
+
+  Wire.beginTransmission(PCF8523_ADDRESS);
+  Wire.write(PCF8523_CLKOUTCONTROL);
+  Wire.endTransmission();
+  
+  Wire.requestFrom((uint8_t)PCF8523_ADDRESS, (uint8_t)1);
+  mode = Wire.read();
+
+  mode >>= 3;
+  mode &= 0x7;
+  return static_cast<Pcf8523SqwPinMode>(mode);
+}
+
+void RTC_PCF8523::writeSqwPinMode(Pcf8523SqwPinMode mode) {
+  Wire.beginTransmission(PCF8523_ADDRESS);
+  Wire.write(PCF8523_CLKOUTCONTROL);
+  Wire.write(mode << 3);
+  Wire.endTransmission();
+}
+
+RTC_PCF8523 rtcExtPhy;
+#endif //ADAFRUIT_FEATHERWING_RTC_SD

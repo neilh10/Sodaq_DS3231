@@ -20,10 +20,11 @@
 // Simple general-purpose date/time class (no TZ / DST / leap second handling!)
 class DateTime {
 public:
-    DateTime (long t =0);
+    DateTime (long t =0); //Translates to years, and stores as offset from 2000.
     DateTime (uint16_t year, uint8_t month, uint8_t date,
               uint8_t hour, uint8_t min, uint8_t sec, uint8_t wday);
     DateTime (const char* date, const char* time);
+    DateTime (const __FlashStringHelper* date, const __FlashStringHelper* time);
 
     uint8_t second() const      { return ss; }
     uint8_t minute() const      { return mm; }
@@ -32,6 +33,7 @@ public:
     uint8_t date() const        { return d; }
     uint8_t month() const       { return m; }
     uint16_t year() const       { return 2000 + yOff; }		// Notice the 2000 !
+    uint8_t year2k() const       { return yOff; }		// Notice the 2000 !
 
     uint8_t dayOfWeek() const   { return wday;}  /*Su=1 Mo=2 Tu=3 We=4 Th=5 Fr=6 Sa=7 */
 
@@ -39,6 +41,8 @@ public:
     uint32_t get() const;
     // 32-bit number of seconds since Unix epoch (1970-01-01)
     uint32_t getEpoch() const;
+    // 32-bit number of seconds since yr2000 UST/GMT (2000-01-01)
+    uint32_t getY2k_secs() const;
 
     void addToString(String & str) const;
 
@@ -90,4 +94,25 @@ private:
 
 extern Sodaq_DS3231 rtc;
 
+#if defined ADAFRUIT_FEATHERWING_RTC_SD
+// RTC based on the PCF8523 chip connected via I2C and the Wire library
+#define PCF8523_ADDRESS       0x68
+#define PCF8523_CLKOUTCONTROL 0x0F
+#define PCF8523_CONTROL_3     0x02
+enum Pcf8523SqwPinMode { PCF8523_OFF = 7, PCF8523_SquareWave1HZ = 6, PCF8523_SquareWave32HZ = 5, PCF8523_SquareWave1kHz = 4, PCF8523_SquareWave4kHz = 3, PCF8523_SquareWave8kHz = 2, PCF8523_SquareWave16kHz = 1, PCF8523_SquareWave32kHz = 0 };
+
+class RTC_PCF8523 {
+public:
+    boolean begin(void);
+    void adjust(const DateTime& dt) { setTimeYear2kT0(dt);}
+    void setTimeYear2kT0(const DateTime& dt);
+    void setTimeEpochT0(long t);
+    boolean initialized(void);
+    static DateTime now();
+
+    Pcf8523SqwPinMode readSqwPinMode();
+    void writeSqwPinMode(Pcf8523SqwPinMode mode);
+};
+extern RTC_PCF8523 rtcExtPhy;
+#endif //ADAFRUIT_FEATHERWING_RTC_SD
 #endif
