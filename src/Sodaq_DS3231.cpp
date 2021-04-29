@@ -465,7 +465,7 @@ Sodaq_DS3231 rtc;
 //for consistency with other /INT interrupts. All interrupts works like single-shot counter
 //Use refreshINTA() to re-enable interrupt.
 //return 0 if true or else bit position of non-compliant register
-#define Sodaq_DS3231_DEBUG
+//#define Sodaq_DS3231_DEBUG
 #if defined Sodaq_DS3231_DEBUG
 #define SODAQ_DBG2(parm1,parm2)     Serial.print(parm1,HEX); Serial.print("/");Serial.print(parm2,HEX);Serial.print(", ")
 #define SODAQ_DBGT(parm1) Serial.print(parm1);
