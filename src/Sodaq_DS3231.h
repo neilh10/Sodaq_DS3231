@@ -90,6 +90,9 @@ public:
 private:
     uint8_t readRegister(uint8_t regaddress);
     void writeRegister(uint8_t regaddress, uint8_t value);
+
+public:
+    uint8_t  enableInterruptsCheck(uint8_t periodicity);
 };
 
 extern Sodaq_DS3231 rtc;
