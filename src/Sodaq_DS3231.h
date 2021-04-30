@@ -92,7 +92,7 @@ private:
     void writeRegister(uint8_t regaddress, uint8_t value);
 
 public:
-    uint8_t  enableInterruptsCheck(uint8_t periodicity);
+    uint8_t  enableInterruptsCheckAlm1(uint8_t periodicity);
 };
 
 extern Sodaq_DS3231 rtc;

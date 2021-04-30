@@ -1,7 +1,9 @@
 {
   "name": "EnviroDIY_DS3231nh",
-  "version": "1.3.4",
-  "description": "An Arduino library for the DS3231 RTC (Real Time Clock).  This is based off of the Sodaq_DS3231 library available at https://github.com/SodaqMoja/Sodaq_DS3231",
+  "version": "1.3.5-nh1",
+  "description": "An Arduino library for the DS3231 RTC (Real Time Clock).",  
+  "description": "This is based off of the Sodaq_DS3231 library available at https://github.com/SodaqMoja/Sodaq_DS3231.",
+  "description": "This uses Semantic Version semver.org 1.3.5 > 1.3.5-nh1 > 1.3.4 > 1.3.3",
   "keywords": "ds3231, real time clock, rtc",
   "authors": [
     {
@@ -10,16 +12,20 @@
     },
     {
       "name": "Sara Damiano",
-      "email": "sdamiano@stroudcenter.org",
+      "email": "sdamiano@stroudcenter.org"
+    },
+    {
+      "name": "Neil Hancock",
+      "email": "neilh20+Soda_DS3231nh@wLLw.net",
       "maintainer": true
     }
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/neilh10/Sodaq_DS3231"
+    "url": "https://github.com/neilh10/Sodaq_DS3231#release"
   },
   "license": "MIT",
-  "homepage": "https://github.com/EnviroDIY/Sodaq_DS3231",
+  "homepage": "https://github.com/neilh10/Sodaq_DS3231",
   "frameworks": "*",
   "platforms": "*",
   "examples": "examples/*/*.ino",

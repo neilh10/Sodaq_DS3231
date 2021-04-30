@@ -481,11 +481,11 @@ Sodaq_DS3231 rtc;
 #else
 #define SODAQ_PROGMEM
 #endif
-const uint8_t almReg_1second_pm[DS3231_ALM_SZ] SODAQ_PROGMEM  = {0x80,0x80,0x80, 0x80};
-const uint8_t almReg_1minute_pm[DS3231_ALM_SZ] SODAQ_PROGMEM  = {0x00,0x80,0x80, 0x80};
-const uint8_t almReg_1hour_pm[DS3231_ALM_SZ]   SODAQ_PROGMEM  = {0x00,0x00,0x80, 0x80};
+const uint8_t alm1Ref_1second_pm[DS3231_ALM_SZ] SODAQ_PROGMEM  = {0x80,0x80,0x80, 0x80};
+const uint8_t alm1Ref_1minute_pm[DS3231_ALM_SZ] SODAQ_PROGMEM  = {0x00,0x80,0x80, 0x80};
+const uint8_t alm1Ref_1hour_pm[DS3231_ALM_SZ]   SODAQ_PROGMEM  = {0x00,0x00,0x80, 0x80};
 
-uint8_t Sodaq_DS3231::enableInterruptsCheck(uint8_t periodicity)
+uint8_t Sodaq_DS3231::enableInterruptsCheckAlm1(uint8_t periodicity)
 {
 
     uint8_t cmp_result = 0;
@@ -503,9 +503,9 @@ uint8_t Sodaq_DS3231::enableInterruptsCheck(uint8_t periodicity)
 
     switch(periodicity)
     {    
-        case EverySecond: p_almReg_pm =(uint8_t *)almReg_1second_pm; break;
-        case EveryMinute: p_almReg_pm =(uint8_t *)almReg_1minute_pm; break;
-        case EveryHour: p_almReg_pm   =(uint8_t *)almReg_1hour_pm;   break;        
+        case EverySecond: p_almReg_pm =(uint8_t *)alm1Ref_1second_pm; break;
+        case EveryMinute: p_almReg_pm =(uint8_t *)alm1Ref_1minute_pm; break;
+        case EveryHour: p_almReg_pm   =(uint8_t *)alm1Ref_1hour_pm;   break;        
     }
     if (0==p_almReg_pm) {
         SODAQ_DBGT(periodicity);
