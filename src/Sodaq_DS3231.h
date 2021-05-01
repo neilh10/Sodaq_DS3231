@@ -90,9 +90,13 @@ public:
 private:
     uint8_t readRegister(uint8_t regaddress);
     void writeRegister(uint8_t regaddress, uint8_t value);
+    void writeRegister_pm(uint8_t regaddress, uint8_t *buf, uint8_t len);
 
 public:
-    uint8_t  enableInterruptsCheckAlm1(uint8_t periodicity);
+    uint8_t enableInterruptsCheckAlm1(uint8_t periodicity);
+    //Alm2 in testing didn't create an interrupt. Alm1 created interrupts
+    uint8_t enableInterruptsCheckAlm2(uint8_t periodicity);
+    void    enableInterruptsAlm2(uint8_t periodicity);
 };
 
 extern Sodaq_DS3231 rtc;

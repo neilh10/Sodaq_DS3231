@@ -461,10 +461,7 @@ float Sodaq_DS3231::getTemperature()
 
 Sodaq_DS3231 rtc;
 
-//Enable periodic interrupt at /INT pin. Supports only the level interrupt
-//for consistency with other /INT interrupts. All interrupts works like single-shot counter
-//Use refreshINTA() to re-enable interrupt.
-//return 0 if true or else bit position of non-compliant register
+// Extension code placed here to keep compatibility from upstream fork.
 //#define Sodaq_DS3231_DEBUG
 #if defined Sodaq_DS3231_DEBUG
 #define SODAQ_DBG2(parm1,parm2)     Serial.print(parm1,HEX); Serial.print("/");Serial.print(parm2,HEX);Serial.print(", ")
@@ -475,16 +472,26 @@ Sodaq_DS3231 rtc;
 #define SODAQ_DBGT(parm1) 
 #define SODAQ_DBGN(parm1)
 #endif 
-#define DS3231_ALM_SZ 4
+
 #if defined(__AVR__)
 #define SODAQ_PROGMEM PROGMEM
+#define SDOAQ_rd_pgm(param1) pgm_read_byte_near(param1)
 #else
 #define SODAQ_PROGMEM
+#define SDOAQ_rd_pgm(param1) param1
 #endif
-const uint8_t alm1Ref_1second_pm[DS3231_ALM_SZ] SODAQ_PROGMEM  = {0x80,0x80,0x80, 0x80};
-const uint8_t alm1Ref_1minute_pm[DS3231_ALM_SZ] SODAQ_PROGMEM  = {0x00,0x80,0x80, 0x80};
-const uint8_t alm1Ref_1hour_pm[DS3231_ALM_SZ]   SODAQ_PROGMEM  = {0x00,0x00,0x80, 0x80};
 
+#define DS3231_ALM1_SZ 4
+//Alarm1 has four consecutive registers  A1M1 A1M2 A1M3 A1M4
+const uint8_t alm1Ref_1second_pm[DS3231_ALM1_SZ] SODAQ_PROGMEM  = {0x80,0x80,0x80, 0x80};
+const uint8_t alm1Ref_1minute_pm[DS3231_ALM1_SZ] SODAQ_PROGMEM  = {0x00,0x80,0x80, 0x80};
+const uint8_t alm1Ref_1hour_pm[DS3231_ALM1_SZ]   SODAQ_PROGMEM  = {0x00,0x00,0x80, 0x80};
+
+//Enable periodic interrupt at /INT pin. Supports only the level interrupt
+//for consistency with other /INT interrupts. All interrupts works like single-shot counter
+//Use refreshINTA() to re-enable interrupt.
+//return 0 if true or else bit position of non-compliant register
+// Check the ALM1 is enabled in two reads 
 uint8_t Sodaq_DS3231::enableInterruptsCheckAlm1(uint8_t periodicity)
 {
 
@@ -492,7 +499,7 @@ uint8_t Sodaq_DS3231::enableInterruptsCheckAlm1(uint8_t periodicity)
     uint8_t devReg;
     uint8_t *p_almReg_pm= 0; //Pointer ref program space
 
-    SODAQ_DBGT("SODAQreg ");  
+    SODAQ_DBGT("SODAQalm1 reg/diff ");  
 
     //Check CONTROL_REG
     #define DS3231_ALM1_EN 0b00000101
@@ -510,27 +517,27 @@ uint8_t Sodaq_DS3231::enableInterruptsCheckAlm1(uint8_t periodicity)
     if (0==p_almReg_pm) {
         SODAQ_DBGT(periodicity);
         SODAQ_DBGN(" invalid periodicity!");
-        return cmp_result;
+        return 0xFF;
     }
 
-    //Check the ALM1 Regs
+    //Check the ALM1 Regs by reading 4 consecutive registers
     Wire.beginTransmission(DS3231_ADDRESS);
     Wire.write(DS3231_AL1SEC_REG);
     Wire.endTransmission();
 
-    uint8_t sz_read=Wire.requestFrom(DS3231_ADDRESS, DS3231_ALM_SZ);
-    if (DS3231_ALM_SZ == sz_read) {
+    uint8_t sz_read=Wire.requestFrom(DS3231_ADDRESS, DS3231_ALM1_SZ);
+    if (DS3231_ALM1_SZ == sz_read) {
         devReg =(uint8_t)Wire.read();
-        cmp_result |= ( (bool)( devReg ^ pgm_read_byte_near(&p_almReg_pm[0]) )?  0x02:0); //07 Check Seconds
+        cmp_result |= ( (bool)( devReg ^ SDOAQ_rd_pgm(&p_almReg_pm[0]) )?  0x02:0); //07 Check Seconds
         SODAQ_DBG2(devReg,cmp_result);
         devReg =(uint8_t)Wire.read();
-        cmp_result |= ( (bool)( devReg  ^ pgm_read_byte_near(&p_almReg_pm[1]) )? 0x04:0); //08 Check Minutes    
+        cmp_result |= ( (bool)( devReg  ^ SDOAQ_rd_pgm(&p_almReg_pm[1]) )? 0x04:0); //08 Check Minutes    
         SODAQ_DBG2(devReg,cmp_result);
         devReg =(uint8_t)Wire.read();
-        cmp_result |= ( (bool)( devReg  ^ pgm_read_byte_near(&p_almReg_pm[2]) )? 0x08:0); //09 Check Hours
+        cmp_result |= ( (bool)( devReg  ^ SDOAQ_rd_pgm(&p_almReg_pm[2]) )? 0x08:0); //09 Check Hours
         SODAQ_DBG2(devReg,cmp_result);
         devReg =(uint8_t)Wire.read();
-        cmp_result |= ( (bool)( devReg  ^ pgm_read_byte_near(&p_almReg_pm[3]) )? 0x10:0); //0A Check Day   
+        cmp_result |= ( (bool)( devReg  ^ SDOAQ_rd_pgm(&p_almReg_pm[3]) )? 0x10:0); //0A Check Day   
         SODAQ_DBG2(devReg,cmp_result);
         SODAQ_DBGN("");
     } else {
@@ -538,6 +545,92 @@ uint8_t Sodaq_DS3231::enableInterruptsCheckAlm1(uint8_t periodicity)
     }
 
    return cmp_result;
+}
+
+#define DS3231_ALM2_SZ 4
+//Alarm2 has four consecutive registers A2M2 A2M3 A2M4 Control  
+const uint8_t alm2Ref_1minute_pm[DS3231_ALM2_SZ] SODAQ_PROGMEM  = {0x80,0x80, 0x80, 0b00000110};
+const uint8_t alm2Ref_1hour_pm[DS3231_ALM2_SZ]   SODAQ_PROGMEM  = {0x00,0x80, 0x80, 0b00000110};
+
+// Check the ALM2 is enabled in one multi-byte read 
+uint8_t Sodaq_DS3231::enableInterruptsCheckAlm2(uint8_t periodicity)
+{
+    uint8_t cmp_result = 0;
+    uint8_t devReg;
+    uint8_t *p_almReg_pm= 0; //Pointer ref program space
+
+    SODAQ_DBGT("SODAQalm2 reg/diff ");  
+
+    switch(periodicity)
+    {    
+        //case EverySecond: p_almReg_pm =(uint8_t *)alm1Ref_1second_pm; break;
+        case EveryMinute: p_almReg_pm =(uint8_t *)alm2Ref_1minute_pm; break;
+        case EveryHour: p_almReg_pm   =(uint8_t *)alm2Ref_1hour_pm;   break;    
+    }
+    if (0==p_almReg_pm) {
+        SODAQ_DBGT(periodicity);
+        SODAQ_DBGN(F(" invalid periodicity!"));
+        return 0xFF;
+    }
+
+    //Read the ALM2 + CONTROL Regs
+    Wire.beginTransmission(DS3231_ADDRESS);
+    Wire.write(DS3231_AL2MIN_REG);
+    Wire.endTransmission();
+
+    uint8_t sz_read=Wire.requestFrom(DS3231_ADDRESS, DS3231_ALM2_SZ);
+    if (DS3231_ALM2_SZ == sz_read) {
+        devReg =(uint8_t)Wire.read();
+        cmp_result |= ( (bool)( devReg ^ SDOAQ_rd_pgm(&p_almReg_pm[0]) )?  0x04:0); //0B Check Minutes
+        SODAQ_DBG2(devReg,cmp_result);
+        devReg =(uint8_t)Wire.read();
+        cmp_result |= ( (bool)( devReg  ^ SDOAQ_rd_pgm(&p_almReg_pm[1]) )? 0x08:0); //0C Check Hours    
+        SODAQ_DBG2(devReg,cmp_result);
+        devReg =(uint8_t)Wire.read();
+        cmp_result |= ( (bool)( devReg  ^ SDOAQ_rd_pgm(&p_almReg_pm[2]) )? 0x10:0); //0D Check Hours
+        SODAQ_DBG2(devReg,cmp_result);
+        devReg =(uint8_t)Wire.read();
+        cmp_result |= ( (bool)( devReg  ^ SDOAQ_rd_pgm(&p_almReg_pm[3]) )? 0x01:0); //0E Check Control   
+        SODAQ_DBG2(devReg,cmp_result);
+        SODAQ_DBGN("");
+    } else {
+        SODAQ_DBGN(" not read!");
+    }
+
+   return cmp_result;
+}
+
+//Enable periodic interrupt at /INT pin. Supports only the level interrupt
+//for consistency with other /INT interrupts. All interrupts works like single-shot counter
+//Use enableInterruptsCheckAlm2 for already setup interrupts
+// Practical note: this didn't creae an interrupt when tested. Alm1 worked
+void Sodaq_DS3231::enableInterruptsAlm2(uint8_t periodicity)
+{
+    uint8_t *p_almReg_pm= 0; //Pointer ref program space
+
+    SODAQ_DBGT("SODAQenInt alm2 ");  
+    switch(periodicity)
+    {    
+        case EveryMinute: p_almReg_pm =(uint8_t *)alm2Ref_1minute_pm; break;
+        case EveryHour: p_almReg_pm   =(uint8_t *)alm2Ref_1hour_pm;   break;    
+    }
+    if (0==p_almReg_pm) {
+        SODAQ_DBGT(periodicity);
+        SODAQ_DBGN(F(" invalid periodicity!"));
+        return;
+    }
+    writeRegister_pm(DS3231_AL2MIN_REG,p_almReg_pm,DS3231_ALM2_SZ);
+}
+
+//Write a constant buffer from program space
+void Sodaq_DS3231::writeRegister_pm(uint8_t regaddress, uint8_t *buf, uint8_t len)
+{
+    Wire.beginTransmission(DS3231_ADDRESS);
+    Wire.write((byte)regaddress);
+    for (uint8_t buf_lp=0; buf_lp<len;buf_lp++) {
+        Wire.write((byte) SDOAQ_rd_pgm(&buf[buf_lp]));
+    }
+    Wire.endTransmission();
 }
 
 #if defined ADAFRUIT_FEATHERWING_RTC_SD
