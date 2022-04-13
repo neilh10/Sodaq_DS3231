@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
 
       - name: Set environment variable for current library version
         run: |
@@ -30,7 +30,7 @@ jobs:
           echo "ZIP_NAME=$ZIP_FILE" >> $GITHUB_ENV
 
       - name: Set up Python
-        uses: actions/setup-python@v2.3.2
+        uses: actions/setup-python@v3
 
       - name: Install PlatformIO
         run: |
