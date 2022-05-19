@@ -99,7 +99,7 @@ public:
     void    enableInterruptsAlm2(uint8_t periodicity);
 };
 
-//extern Sodaq_DS3231 ext_rtc_phy; moved to invoking so can choose to specify other chips
+extern Sodaq_DS3231 rtc;
 
 #if defined ADAFRUIT_FEATHERWING_RTC_SD
 // RTC based on the PCF8523 chip connected via I2C and the Wire library

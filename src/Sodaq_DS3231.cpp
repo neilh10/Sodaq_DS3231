@@ -459,7 +459,7 @@ float Sodaq_DS3231::getTemperature()
 
 }
 
-//Sodaq_DS3231 ext_rtc_phy; moved to invoking so can choose to specify other chips
+Sodaq_DS3231 rtc;
 
 // Extension code placed here to keep compatibility from upstream fork.
 //#define Sodaq_DS3231_DEBUG
