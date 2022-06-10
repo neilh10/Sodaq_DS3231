@@ -18,13 +18,13 @@
 
 
 // Simple general-purpose date/time class (no TZ / DST / leap second handling!)
-class DateTime {
+class DateTimeMs { //Modular Sensors Custom Version
 public:
-    DateTime (long t =0); //Translates to years, and stores as offset from 2000.
-    DateTime (uint16_t year, uint8_t month, uint8_t date,
+    DateTimeMs (long t =0); //Translates to years, and stores as offset from 2000.
+    DateTimeMs (uint16_t year, uint8_t month, uint8_t date,
               uint8_t hour, uint8_t min, uint8_t sec, uint8_t wday);
-    DateTime (const char* date, const char* time);
-    DateTime (const __FlashStringHelper* date, const __FlashStringHelper* time);
+    DateTimeMs (const char* date, const char* time);
+    DateTimeMs (const __FlashStringHelper* date, const __FlashStringHelper* time);
 
     uint8_t second() const      { return ss; }
     uint8_t minute() const      { return mm; }
@@ -71,11 +71,11 @@ class Sodaq_DS3231 {
 public:
     uint8_t begin(void);
 
-    void setDateTime(const DateTime& dt);  //Changes the date-time
+    void setDateTime(const DateTimeMs& dt);  //Changes the date-time
     void setEpoch(uint32_t ts); // Set the RTC using timestamp (seconds since epoch)
-    DateTime now();            //Gets the current date-time
+    DateTimeMs now();            //Gets the current date-time
 
-    DateTime makeDateTime(unsigned long t);
+    DateTimeMs makeDateTime(unsigned long t);
 
     //Decides the /INT pin's output setting
     //periodicity can be any of following defines: EverySecond, EveryMinute, EveryHour
@@ -111,11 +111,11 @@ enum Pcf8523SqwPinMode { PCF8523_OFF = 7, PCF8523_SquareWave1HZ = 6, PCF8523_Squ
 class RTC_PCF8523 {
 public:
     boolean begin(void);
-    void adjust(const DateTime& dt) { setTimeYear2kT0(dt);}
-    void setTimeYear2kT0(const DateTime& dt);
+    void adjust(const DateTimeMs& dt) { setTimeYear2kT0(dt);}
+    void setTimeYear2kT0(const DateTimeMs& dt);
     void setTimeEpochT0(long t);
     boolean initialized(void);
-    static DateTime now();
+    static DateTimeMs now();
 
     Pcf8523SqwPinMode readSqwPinMode();
     void writeSqwPinMode(Pcf8523SqwPinMode mode);

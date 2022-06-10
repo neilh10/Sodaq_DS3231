@@ -84,7 +84,7 @@ static uint8_t conv2d(const char* p) {
 // DateTime implementation - ignores time zones and DST changes
 // NOTE: also ignores leap seconds, see http://en.wikipedia.org/wiki/Leap_second
 
-DateTime::DateTime (long t) {
+DateTimeMs::DateTimeMs (long t) {
     ss = t % 60;
     t /= 60;  // now t is minutes
     mm = t % 60;
@@ -110,7 +110,7 @@ DateTime::DateTime (long t) {
     wday = DayOfWeek(yOff+2000, m, d);
 }
 
-DateTime::DateTime (uint16_t year, uint8_t month, uint8_t date, uint8_t hour, uint8_t min, uint8_t sec, uint8_t wd) {
+DateTimeMs::DateTimeMs (uint16_t year, uint8_t month, uint8_t date, uint8_t hour, uint8_t min, uint8_t sec, uint8_t wd) {
     if (year >= 2000)
         year -= 2000;
     yOff = year;
@@ -125,7 +125,7 @@ DateTime::DateTime (uint16_t year, uint8_t month, uint8_t date, uint8_t hour, ui
 // A convenient constructor for using "the compiler's time":
 //   DateTime now (__DATE__, __TIME__);
 // NOTE: using PSTR would further reduce the RAM footprint
-DateTime::DateTime (const char* date, const char* time) {
+DateTimeMs::DateTimeMs (const char* date, const char* time) {
     // sample input: date = "Dec 26 2009", time = "12:34:56"
     yOff = conv2d(date + 9);
     // Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
@@ -149,7 +149,7 @@ DateTime::DateTime (const char* date, const char* time) {
 // A convenient constructor for using "the compiler's time":
 // This version will save RAM by using PROGMEM to store it by using the F macro.
 //   DateTime now (F(__DATE__), F(__TIME__));
-DateTime::DateTime (const __FlashStringHelper* date, const __FlashStringHelper* time) {
+DateTimeMs::DateTimeMs (const __FlashStringHelper* date, const __FlashStringHelper* time) {
     // sample input: date = "Dec 26 2009", time = "12:34:56"
     char buff[11];
     memcpy_P(buff, date, 11);
@@ -172,16 +172,16 @@ DateTime::DateTime (const __FlashStringHelper* date, const __FlashStringHelper* 
     ss = conv2d(buff + 6);
 }
 
-uint32_t DateTime::get() const {
+uint32_t DateTimeMs::get() const {
     uint16_t days = date2days(yOff, m, d);
     return time2long(days, hh, mm, ss);
 }
 
-uint32_t DateTime::getEpoch() const
+uint32_t DateTimeMs::getEpoch() const
 {
     return get() + EPOCH_TIME_OFF;
 }
-uint32_t DateTime::getY2k_secs() const
+uint32_t DateTimeMs::getY2k_secs() const
 {
     return get();
 }
@@ -210,7 +210,7 @@ static void add0Nd(String &str, uint16_t val, size_t width)
 static inline void add04d(String &str, uint16_t val) { add0Nd(str, val, 4); }
 static inline void add02d(String &str, uint16_t val) { add0Nd(str, val, 2); }
 
-void DateTime::addToString(String & str) const
+void DateTimeMs::addToString(String & str) const
 {
     add04d(str, year());
     str += '-';
@@ -270,9 +270,9 @@ uint8_t Sodaq_DS3231::begin(void) {
   return 1;
 }
 
-//set the time-date specified in DateTime format
+//set the time-date specified in DateTimeMs format
 //writing any non-existent time-data may interfere with normal operation of the RTC
-void Sodaq_DS3231::setDateTime(const DateTime& dt) {
+void Sodaq_DS3231::setDateTime(const DateTimeMs& dt) {
 
   Wire.beginTransmission(DS3231_ADDRESS);
   Wire.write((byte)DS3231_SEC_REG);  //beginning from SEC Register address
@@ -288,11 +288,11 @@ void Sodaq_DS3231::setDateTime(const DateTime& dt) {
 
 }
 
-DateTime Sodaq_DS3231::makeDateTime(unsigned long t)
+DateTimeMs Sodaq_DS3231::makeDateTime(unsigned long t)
 {
   if (t < EPOCH_TIME_OFF)
-    return DateTime(0);
-  return DateTime(t - EPOCH_TIME_OFF);
+    return DateTimeMs(0);
+  return DateTimeMs(t - EPOCH_TIME_OFF);
 }
 
 // Set the RTC using timestamp (seconds since epoch)
@@ -302,7 +302,7 @@ void Sodaq_DS3231::setEpoch(uint32_t ts)
 }
 
 //Read the current time-date and return it in DateTime format
-DateTime Sodaq_DS3231::now() {
+DateTimeMs Sodaq_DS3231::now() {
   Wire.beginTransmission(DS3231_ADDRESS);
   Wire.write((byte)0x00);
   Wire.endTransmission();
@@ -319,7 +319,7 @@ DateTime Sodaq_DS3231::now() {
   uint8_t m = bcd2bin(Wire.read());
   uint16_t y = bcd2bin(Wire.read()) + 2000;
 
-  return DateTime (y, m, d, hh, mm, ss, wd);
+  return DateTimeMs (y, m, d, hh, mm, ss, wd);
 }
 
 //Enable periodic interrupt at /INT pin. Supports only the level interrupt
@@ -654,11 +654,11 @@ boolean RTC_PCF8523::initialized(void) {
 }
 
 void RTC_PCF8523::setTimeEpochT0(long t) {
-    DateTime dt;
+    DateTimeMs dt;
     setTimeYear2kT0(t-EPOCH_TIME_OFF);
 }
 // Set time - relative to yr2000
-void RTC_PCF8523::setTimeYear2kT0(const DateTime& dt) { 
+void RTC_PCF8523::setTimeYear2kT0(const DateTimeMs& dt) { 
   Wire.beginTransmission(PCF8523_ADDRESS);
   Wire.write((byte)3); // start at location 3
   Wire.write(bin2bcd(dt.second()));
@@ -677,7 +677,7 @@ void RTC_PCF8523::setTimeYear2kT0(const DateTime& dt) {
   Wire.endTransmission();
 }
 
-DateTime RTC_PCF8523::now() {
+DateTimeMs RTC_PCF8523::now() {
   uint8_t ss, mm, hh, day, wkday, mnth; 
   uint16_t year;
   Wire.beginTransmission(PCF8523_ADDRESS);
@@ -693,7 +693,7 @@ DateTime RTC_PCF8523::now() {
   mnth = bcd2bin(Wire.read());
   year = bcd2bin(Wire.read()) + 2000;
   
-  return DateTime (year, mnth, day, hh, mm, ss,wkday);
+  return DateTimeMs (year, mnth, day, hh, mm, ss,wkday);
 }
 
 Pcf8523SqwPinMode RTC_PCF8523::readSqwPinMode() {
