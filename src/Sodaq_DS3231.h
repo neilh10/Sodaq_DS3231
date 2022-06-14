@@ -16,7 +16,7 @@
 
 
 
-
+namespace sodaq_DS3231_nm {
 // Simple general-purpose date/time class (no TZ / DST / leap second handling!)
 class DateTime {
 public:
@@ -100,6 +100,9 @@ public:
 };
 
 extern Sodaq_DS3231 rtc;
+} //namespace sodaq_DS3231_nm
+
+using namespace sodaq_DS3231_nm;
 
 #if defined ADAFRUIT_FEATHERWING_RTC_SD
 // RTC based on the PCF8523 chip connected via I2C and the Wire library
