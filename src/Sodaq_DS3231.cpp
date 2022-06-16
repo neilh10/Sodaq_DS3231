@@ -461,7 +461,7 @@ float Sodaq_DS3231::getTemperature()
 
 }
 
-Sodaq_DS3231 rtc;
+Sodaq_DS3231 rtcExtPhy;
 
 // Extension code placed here to keep compatibility from upstream fork.
 //#define Sodaq_DS3231_DEBUG
