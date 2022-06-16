@@ -16,7 +16,7 @@
 
 
 
-
+namespace sodaq_DS3231_nm {
 // Simple general-purpose date/time class (no TZ / DST / leap second handling!)
 class DateTime {
 public:
@@ -98,8 +98,9 @@ public:
     uint8_t enableInterruptsCheckAlm2(uint8_t periodicity);
     void    enableInterruptsAlm2(uint8_t periodicity);
 };
-
-extern Sodaq_DS3231 rtc;
+//expect to have MS_SAMD_DS3231 defined to enable
+extern Sodaq_DS3231 rtcExtPhy;
+} //namespace sodaq_DS3231_nm
 
 #if defined ADAFRUIT_FEATHERWING_RTC_SD
 // RTC based on the PCF8523 chip connected via I2C and the Wire library

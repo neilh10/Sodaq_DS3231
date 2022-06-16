@@ -16,6 +16,8 @@
 #define EPOCH_TIME_OFF 946684800  // This is 2000-jan-01 00:00:00 in epoch time
 #define SECONDS_PER_DAY 86400L
 
+using namespace sodaq_DS3231_nm;
+
 #define DS3231_ADDRESS	      0x68 //I2C Slave address
 
 /* DS3231 Registers. Refer Sec 8.2 of application manual */
@@ -459,7 +461,7 @@ float Sodaq_DS3231::getTemperature()
 
 }
 
-Sodaq_DS3231 rtc;
+Sodaq_DS3231 rtcExtPhy;
 
 // Extension code placed here to keep compatibility from upstream fork.
 //#define Sodaq_DS3231_DEBUG
